@@ -15,6 +15,12 @@ public enum Environment {
     private final ConcurrentHashMap<Pair<String, String>, BlockingQueue<byte[]>> queues = new ConcurrentHashMap<>();
 
     public static void add(final Agent agent) {
+        for (Agent a : INSTANCE.agents) {
+            if (a.name.equals(agent.name)) {
+                throw new IllegalArgumentException("Agent %s is already defined; all agents must be unique");
+            }
+        }
+
         INSTANCE.agents.add(agent);
     }
 

@@ -3,7 +3,7 @@ package fri.isp;
 import javax.xml.bind.DatatypeConverter;
 
 public abstract class Agent extends Thread {
-    private final String name;
+    public final String name;
 
     public Agent(final String name) {
         super(name);
