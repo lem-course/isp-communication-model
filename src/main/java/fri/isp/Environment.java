@@ -15,6 +15,9 @@ public enum Environment {
     private static final String INVALID_NAMES = "Names must not be null or empty";
     private static final String LINK_EXISTS = "There is already a link between '%s' and '%s'";
     private static final String DUPLICATE_NAME = "Agent with name '%s' is already defined; all agents must be unique";
+    public static final String NON_EXISTING_AGENT = "Agent '%s' does not exist";
+    public static final String MITM_ERROR_DIRECT = "MITM error: Agents '%s' and '%s' are already connected";
+    public static final String MITM_ERROR_MITM_EXISTS = "MITM error: There is an existing link between '%s', '%s' and '%s'";
 
     private final List<Agent> agents = new ArrayList<>();
 
@@ -125,11 +128,22 @@ public enum Environment {
             throw new IllegalArgumentException(INVALID_NAMES);
         }
 
+        final boolean exists1 = INSTANCE.agents.stream().map(Thread::getName).filter(s -> s.equals(agent1)).count() == 1;
+        final boolean exists2 = INSTANCE.agents.stream().map(Thread::getName).filter(s -> s.equals(agent2)).count() == 1;
+
+        if (!exists1) {
+            throw new IllegalArgumentException(String.format(NON_EXISTING_AGENT, agent1));
+        }
+
+        if (!exists2) {
+            throw new IllegalArgumentException(String.format(NON_EXISTING_AGENT, agent2));
+        }
+
         final Pair<String, String> a2b = new Pair<>(agent1, agent2);
         final Pair<String, String> b2a = new Pair<>(agent2, agent1);
 
         if (INSTANCE.queues.containsKey(a2b) || INSTANCE.queues.containsKey(b2a)) {
-            throw new Error(String.format(LINK_EXISTS, agent1, agent2));
+            throw new IllegalArgumentException(String.format(LINK_EXISTS, agent1, agent2));
         }
 
         INSTANCE.queues.put(a2b, new LinkedBlockingQueue<>());
@@ -140,26 +154,36 @@ public enum Environment {
      * Creates a connection between two agents in the presence of an active attacker: man-in-the-middle.
      * The attacker is able to intercept and modify all messages that are exchanged between agents.
      *
-     * @param agent1 the first agent
-     * @param agent2 the second agent
+     * @param agentA the first agent
+     * @param agentB the second agent
      * @param mitm   man in the middle agent
      */
-    public static void mitm(String agent1, String agent2, String mitm) {
-        if (agent1 == null || agent2 == null || mitm == null || agent1.trim().isEmpty() || agent2.trim().isEmpty() || mitm.trim().isEmpty()) {
+    public static void mitm(String agentA, String agentB, String mitm) {
+        if (agentA == null || agentB == null || mitm == null ||
+                agentA.trim().isEmpty() || agentB.trim().isEmpty() || mitm.trim().isEmpty()) {
             throw new IllegalArgumentException(INVALID_NAMES);
         }
 
-        final Pair<String, String> a2b = new Pair<>(agent1, agent2);
-        final Pair<String, String> b2a = new Pair<>(agent2, agent1);
-        final Pair<String, String> a2m = new Pair<>(agent1, mitm);
-        final Pair<String, String> m2a = new Pair<>(mitm, agent1);
-        final Pair<String, String> b2m = new Pair<>(agent2, mitm);
-        final Pair<String, String> m2b = new Pair<>(mitm, agent2);
+        final Pair<String, String> a2b = new Pair<>(agentA, agentB);
+        final Pair<String, String> b2a = new Pair<>(agentB, agentA);
+        final Pair<String, String> a2m = new Pair<>(agentA, mitm);
+        final Pair<String, String> m2a = new Pair<>(mitm, agentA);
+        final Pair<String, String> b2m = new Pair<>(agentB, mitm);
+        final Pair<String, String> m2b = new Pair<>(mitm, agentB);
+
+        if (INSTANCE.queues.containsKey(a2b) || INSTANCE.queues.containsKey(b2a)) {
+            throw new IllegalArgumentException(String.format(MITM_ERROR_DIRECT, agentA, agentB));
+        }
 
         INSTANCE.sendMITM.put(a2b, a2m);
         INSTANCE.sendMITM.put(b2a, b2m);
         INSTANCE.receiveMITM.put(a2b, m2b);
         INSTANCE.receiveMITM.put(b2a, m2a);
+
+        if (INSTANCE.queues.containsKey(a2m) || INSTANCE.queues.containsKey(b2m) ||
+                INSTANCE.queues.containsKey(m2a) || INSTANCE.queues.containsKey(m2b)) {
+            throw new IllegalArgumentException(String.format(MITM_ERROR_MITM_EXISTS, agentA, mitm, agentB));
+        }
 
         INSTANCE.queues.put(a2m, new LinkedBlockingQueue<>());
         INSTANCE.queues.put(b2m, new LinkedBlockingQueue<>());
