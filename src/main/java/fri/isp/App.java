@@ -1,14 +1,15 @@
 package fri.isp;
 
 public class App {
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) {
+
         Environment.add(new Agent("alice") {
             @Override
             public void run() {
                 send("bob", "from Alice".getBytes());
                 send("charlie", "from Alice".getBytes());
-                print("Got %s", new String(recv("bob")));
-                print("Got %s", new String(recv("charlie")));
+                print("Got '%s'", new String(receive("bob")));
+                print("Got '%s'", new String(receive("charlie")));
             }
         });
 
@@ -17,8 +18,8 @@ public class App {
             public void run() {
                 send("alice", "from Bob".getBytes());
                 send("charlie", "from Bob".getBytes());
-                print("Got %s", new String(recv("alice")));
-                print("Got %s", new String(recv("charlie")));
+                print("Got '%s'", new String(receive("alice")));
+                print("Got '%s'", new String(receive("charlie")));
             }
         });
 
@@ -27,8 +28,8 @@ public class App {
             public void run() {
                 send("bob", "from Charlie".getBytes());
                 send("alice", "from Charlie".getBytes());
-                print("Got %s", new String(recv("alice")));
-                print("Got %s", new String(recv("bob")));
+                print("Got '%s'", new String(receive("alice")));
+                print("Got '%s'", new String(receive("bob")));
             }
         });
 
