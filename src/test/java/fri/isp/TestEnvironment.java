@@ -1,185 +1,180 @@
 package fri.isp;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
-import java.util.concurrent.CountDownLatch;
-
 public class TestEnvironment {
-    @Test
-    public void sendAndReceive() throws InterruptedException {
-        final CountDownLatch latch = new CountDownLatch(2);
 
+    private Environment env;
+
+    @Before
+    public void setup() {
+        env = new Environment();
+    }
+
+    @Test
+    public void sendAndReceive() {
         final byte[] sent = "test-data".getBytes();
 
-        Environment.add(new Agent("alice1") {
+        env.add(new Agent("alice1") {
             @Override
             public void run() {
                 send("bob1", sent);
-                latch.countDown();
             }
         });
 
-        Environment.add(new Agent("bob1") {
+        env.add(new Agent("bob1") {
             @Override
             public void run() {
                 final byte[] received = receive("alice1");
                 Assert.assertArrayEquals(received, sent);
-                latch.countDown();
             }
         });
 
-        Environment.connect("alice1", "bob1");
-        Environment.start();
-        latch.await();
+        env.connect("alice1", "bob1");
+        env.start();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void connectWrongName() {
-        Environment.add(new Agent("alice") {
+        env.add(new Agent("alice") {
             @Override
             public void run() {
 
             }
         });
 
-        Environment.connect("alice", "missing");
+        env.connect("alice", "missing");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void connectInvalidName1() {
-        Environment.add(new Agent("alice") {
+        env.add(new Agent("alice") {
             @Override
             public void run() {
             }
         });
 
-        Environment.connect("alice", "");
+        env.connect("alice", "");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void connectInvalidName2() {
-        Environment.add(new Agent("alice") {
+        env.add(new Agent("alice") {
             @Override
             public void run() {
             }
         });
 
-        Environment.connect("", "alice");
+        env.connect("", "alice");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void connectInvalidName3() {
-        Environment.add(new Agent("alice") {
+        env.add(new Agent("alice") {
             @Override
             public void run() {
             }
         });
 
-        Environment.connect("alice", " ");
+        env.connect("alice", " ");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void connectInvalidName4() {
-        Environment.add(new Agent("alice") {
+        env.add(new Agent("alice") {
             @Override
             public void run() {
             }
         });
 
-        Environment.connect(" ", "alice");
+        env.connect(" ", "alice");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void connectExisting() {
-        Environment.add(new Agent("alice") {
+        env.add(new Agent("alice") {
             @Override
             public void run() {
             }
         });
-        Environment.add(new Agent("bob") {
+        env.add(new Agent("bob") {
             @Override
             public void run() {
             }
         });
 
-        Environment.connect("bob", "alice");
-        Environment.connect("alice", "bob");
+        env.connect("bob", "alice");
+        env.connect("alice", "bob");
     }
 
     @Test
-    public void mitmSimple() throws InterruptedException {
-        final CountDownLatch latch = new CountDownLatch(3);
+    public void mitmSimple() {
         final byte[] data = new byte[]{1, 2, 3, 4, 5};
 
-        Environment.add(new Agent("a") {
+        env.add(new Agent("a") {
             @Override
             public void run() {
                 send("b", data);
-                latch.countDown();
             }
         });
-        Environment.add(new Agent("m") {
+        env.add(new Agent("m") {
             @Override
             public void run() {
                 final byte[] intercepted = receive("a");
                 Assert.assertArrayEquals(data, intercepted);
                 send("b", intercepted);
-                latch.countDown();
             }
         });
-        Environment.add(new Agent("b") {
+        env.add(new Agent("b") {
             @Override
             public void run() {
                 final byte[] received = receive("a");
                 Assert.assertArrayEquals(data, received);
-                latch.countDown();
             }
         });
 
-        Environment.mitm("a", "b", "m");
-        Environment.start();
-        latch.await();
+        env.mitm("a", "b", "m");
+        env.start();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void mitmExistingDirect() {
-        Environment.add(new Agent("alice") {
+        env.add(new Agent("alice") {
             @Override
             public void run() {
             }
         });
-        Environment.add(new Agent("bob") {
+        env.add(new Agent("bob") {
             @Override
             public void run() {
             }
         });
 
-        Environment.connect("alice", "bob");
-        Environment.mitm("alice", "bob", "ccc");
+        env.connect("alice", "bob");
+        env.mitm("alice", "bob", "ccc");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void mitmExistingToMITM() {
-        Environment.add(new Agent("alice") {
+        env.add(new Agent("alice") {
             @Override
             public void run() {
             }
         });
-        Environment.add(new Agent("bob") {
+        env.add(new Agent("bob") {
             @Override
             public void run() {
             }
         });
-        Environment.add(new Agent("mitm") {
+        env.add(new Agent("mitm") {
             @Override
             public void run() {
             }
         });
 
-        Environment.connect("alice", "mitm");
-        Environment.mitm("alice", "alice", "mitm");
+        env.connect("alice", "mitm");
+        env.mitm("alice", "alice", "mitm");
     }
-
-
 }

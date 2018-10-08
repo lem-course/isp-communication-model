@@ -2,8 +2,8 @@ package fri.isp;
 
 public class AppMITM {
     public static void main(String[] args) {
-
-        Environment.add(new Agent("alice") {
+        final Environment env = new Environment();
+        env.add(new Agent("alice") {
             @Override
             public void run() {
                 send("bob", "from Alice".getBytes());
@@ -11,7 +11,7 @@ public class AppMITM {
             }
         });
 
-        Environment.add(new Agent("bob") {
+        env.add(new Agent("bob") {
             @Override
             public void run() {
                 send("alice", "from Bob".getBytes());
@@ -19,7 +19,7 @@ public class AppMITM {
             }
         });
 
-        Environment.add(new Agent("mallory") {
+        env.add(new Agent("mallory") {
             @Override
             public void run() {
                 final byte[] fromAlice = receive("alice");
@@ -33,7 +33,7 @@ public class AppMITM {
             }
         });
 
-        Environment.mitm("alice", "bob", "mallory");
-        Environment.start();
+        env.mitm("alice", "bob", "mallory");
+        env.start();
     }
 }

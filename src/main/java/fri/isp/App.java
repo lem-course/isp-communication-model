@@ -2,8 +2,9 @@ package fri.isp;
 
 public class App {
     public static void main(String[] args) {
+        final Environment env = new Environment();
 
-        Environment.add(new Agent("alice") {
+        env.add(new Agent("alice") {
             @Override
             public void run() {
                 send("bob", "from Alice".getBytes());
@@ -13,7 +14,7 @@ public class App {
             }
         });
 
-        Environment.add(new Agent("bob") {
+        env.add(new Agent("bob") {
             @Override
             public void run() {
                 send("alice", "from Bob".getBytes());
@@ -23,7 +24,7 @@ public class App {
             }
         });
 
-        Environment.add(new Agent("charlie") {
+        env.add(new Agent("charlie") {
             @Override
             public void run() {
                 send("bob", "from Charlie".getBytes());
@@ -33,9 +34,9 @@ public class App {
             }
         });
 
-        Environment.connect("alice", "bob");
-        Environment.connect("alice", "charlie");
-        Environment.connect("charlie", "bob");
-        Environment.start();
+        env.connect("alice", "bob");
+        env.connect("alice", "charlie");
+        env.connect("charlie", "bob");
+        env.start();
     }
 }

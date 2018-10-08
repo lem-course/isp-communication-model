@@ -3,8 +3,14 @@ package fri.isp;
 import javax.xml.bind.DatatypeConverter;
 
 public abstract class Agent extends Thread {
+    private Environment env;
+
     public Agent(final String name) {
         super(name);
+    }
+
+    protected void setEnvironment(final Environment env) {
+        this.env = env;
     }
 
     /**
@@ -14,7 +20,7 @@ public abstract class Agent extends Thread {
      * @param data      the message contents
      */
     public void send(final String recipient, final byte[] data) {
-        Environment.send(getName(), recipient, data);
+        env.send(getName(), recipient, data);
     }
 
     /**
@@ -25,7 +31,7 @@ public abstract class Agent extends Thread {
      * @return message contents
      */
     public byte[] receive(final String sender) {
-        return Environment.receive(sender, getName());
+        return env.receive(sender, getName());
     }
 
     @Override

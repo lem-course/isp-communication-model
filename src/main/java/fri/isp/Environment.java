@@ -8,16 +8,15 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public enum Environment {
-    INSTANCE;
+public class Environment {
 
     private static final String NO_LINK = "There is no connection between '%s' and '%s'.";
     private static final String INVALID_NAMES = "Names must not be null or empty";
     private static final String LINK_EXISTS = "There is already a link between '%s' and '%s'";
     private static final String DUPLICATE_NAME = "Agent with name '%s' is already defined; all agents must be unique";
-    public static final String NON_EXISTING_AGENT = "Agent '%s' does not exist";
-    public static final String MITM_ERROR_DIRECT = "MITM error: Agents '%s' and '%s' are already connected";
-    public static final String MITM_ERROR_MITM_EXISTS = "MITM error: There is an existing link between '%s', '%s' and '%s'";
+    private static final String NON_EXISTING_AGENT = "Agent '%s' does not exist";
+    private static final String MITM_ERROR_DIRECT = "MITM error: Agents '%s' and '%s' are already connected";
+    private static final String MITM_ERROR_MITM_EXISTS = "MITM error: There is an existing link between '%s', '%s' and '%s'";
 
     private final List<Agent> agents = new ArrayList<>();
 
@@ -30,25 +29,26 @@ public enum Environment {
      *
      * @param agent The name of the agent
      */
-    public static void add(final Agent agent) {
-        for (Agent a : INSTANCE.agents) {
+    public void add(final Agent agent) {
+        for (Agent a : agents) {
             if (a.getName().equals(agent.getName())) {
                 throw new IllegalArgumentException(String.format(DUPLICATE_NAME, a.getName()));
             }
         }
 
-        INSTANCE.agents.add(agent);
+        agent.setEnvironment(this);
+        agents.add(agent);
     }
 
     /**
      * Starts the environment
      */
-    public static void start() {
-        for (Agent a : INSTANCE.agents) {
+    public void start() {
+        for (Agent a : agents) {
             a.start();
         }
 
-        for (Agent a : INSTANCE.agents) {
+        for (Agent a : agents) {
             try {
                 a.join();
             } catch (InterruptedException e) {
@@ -64,16 +64,16 @@ public enum Environment {
      * @param receiver agent to whom the message is sent
      * @param message  message contents
      */
-    protected static void send(final String sender, final String receiver, final byte[] message) {
+    protected void send(final String sender, final String receiver, final byte[] message) {
         try {
             final Pair<String, String> direct = new Pair<>(sender, receiver);
-            final Pair<String, String> routed = INSTANCE.sendMITM.get(direct);
+            final Pair<String, String> routed = sendMITM.get(direct);
 
             final BlockingQueue<byte[]> queue;
             if (routed == null) {
-                queue = INSTANCE.queues.get(direct);
+                queue = queues.get(direct);
             } else { // MITM
-                queue = INSTANCE.queues.get(routed);
+                queue = queues.get(routed);
             }
 
             if (queue == null) {
@@ -94,16 +94,16 @@ public enum Environment {
      * @param receiver agent to whom the message was sent
      * @return the message contents
      */
-    protected static byte[] receive(final String sender, final String receiver) {
+    protected byte[] receive(final String sender, final String receiver) {
         try {
             final Pair<String, String> direct = new Pair<>(sender, receiver);
-            final Pair<String, String> routed = INSTANCE.receiveMITM.get(direct);
+            final Pair<String, String> routed = receiveMITM.get(direct);
 
             final BlockingQueue<byte[]> queue;
             if (routed == null) {
-                queue = INSTANCE.queues.get(direct);
+                queue = queues.get(direct);
             } else { // MITM
-                queue = INSTANCE.queues.get(routed);
+                queue = queues.get(routed);
             }
 
             if (queue == null) {
@@ -123,13 +123,13 @@ public enum Environment {
      * @param agent1 the first agent
      * @param agent2 the second agent
      */
-    public static void connect(final String agent1, final String agent2) {
+    public void connect(final String agent1, final String agent2) {
         if (agent1 == null || agent2 == null || agent1.trim().isEmpty() || agent2.trim().isEmpty()) {
             throw new IllegalArgumentException(INVALID_NAMES);
         }
 
-        final boolean exists1 = INSTANCE.agents.stream().map(Thread::getName).filter(s -> s.equals(agent1)).count() == 1;
-        final boolean exists2 = INSTANCE.agents.stream().map(Thread::getName).filter(s -> s.equals(agent2)).count() == 1;
+        final boolean exists1 = agents.stream().map(Thread::getName).filter(s -> s.equals(agent1)).count() == 1;
+        final boolean exists2 = agents.stream().map(Thread::getName).filter(s -> s.equals(agent2)).count() == 1;
 
         if (!exists1) {
             throw new IllegalArgumentException(String.format(NON_EXISTING_AGENT, agent1));
@@ -142,12 +142,12 @@ public enum Environment {
         final Pair<String, String> a2b = new Pair<>(agent1, agent2);
         final Pair<String, String> b2a = new Pair<>(agent2, agent1);
 
-        if (INSTANCE.queues.containsKey(a2b) || INSTANCE.queues.containsKey(b2a)) {
+        if (queues.containsKey(a2b) || queues.containsKey(b2a)) {
             throw new IllegalArgumentException(String.format(LINK_EXISTS, agent1, agent2));
         }
 
-        INSTANCE.queues.put(a2b, new LinkedBlockingQueue<>());
-        INSTANCE.queues.put(b2a, new LinkedBlockingQueue<>());
+        queues.put(a2b, new LinkedBlockingQueue<>());
+        queues.put(b2a, new LinkedBlockingQueue<>());
     }
 
     /**
@@ -158,7 +158,7 @@ public enum Environment {
      * @param agentB the second agent
      * @param mitm   man in the middle agent
      */
-    public static void mitm(String agentA, String agentB, String mitm) {
+    public void mitm(String agentA, String agentB, String mitm) {
         if (agentA == null || agentB == null || mitm == null ||
                 agentA.trim().isEmpty() || agentB.trim().isEmpty() || mitm.trim().isEmpty()) {
             throw new IllegalArgumentException(INVALID_NAMES);
@@ -171,23 +171,23 @@ public enum Environment {
         final Pair<String, String> b2m = new Pair<>(agentB, mitm);
         final Pair<String, String> m2b = new Pair<>(mitm, agentB);
 
-        if (INSTANCE.queues.containsKey(a2b) || INSTANCE.queues.containsKey(b2a)) {
+        if (queues.containsKey(a2b) || queues.containsKey(b2a)) {
             throw new IllegalArgumentException(String.format(MITM_ERROR_DIRECT, agentA, agentB));
         }
 
-        INSTANCE.sendMITM.put(a2b, a2m);
-        INSTANCE.sendMITM.put(b2a, b2m);
-        INSTANCE.receiveMITM.put(a2b, m2b);
-        INSTANCE.receiveMITM.put(b2a, m2a);
+        sendMITM.put(a2b, a2m);
+        sendMITM.put(b2a, b2m);
+        receiveMITM.put(a2b, m2b);
+        receiveMITM.put(b2a, m2a);
 
-        if (INSTANCE.queues.containsKey(a2m) || INSTANCE.queues.containsKey(b2m) ||
-                INSTANCE.queues.containsKey(m2a) || INSTANCE.queues.containsKey(m2b)) {
+        if (queues.containsKey(a2m) || queues.containsKey(b2m) ||
+                queues.containsKey(m2a) || queues.containsKey(m2b)) {
             throw new IllegalArgumentException(String.format(MITM_ERROR_MITM_EXISTS, agentA, mitm, agentB));
         }
 
-        INSTANCE.queues.put(a2m, new LinkedBlockingQueue<>());
-        INSTANCE.queues.put(b2m, new LinkedBlockingQueue<>());
-        INSTANCE.queues.put(m2a, new LinkedBlockingQueue<>());
-        INSTANCE.queues.put(m2b, new LinkedBlockingQueue<>());
+        queues.put(a2m, new LinkedBlockingQueue<>());
+        queues.put(b2m, new LinkedBlockingQueue<>());
+        queues.put(m2a, new LinkedBlockingQueue<>());
+        queues.put(m2b, new LinkedBlockingQueue<>());
     }
 }
