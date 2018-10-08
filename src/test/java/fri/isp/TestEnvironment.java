@@ -19,14 +19,14 @@ public class TestEnvironment {
 
         env.add(new Agent("alice1") {
             @Override
-            public void run() {
+            public void task() {
                 send("bob1", sent);
             }
         });
 
         env.add(new Agent("bob1") {
             @Override
-            public void run() {
+            public void task() {
                 final byte[] received = receive("alice1");
                 Assert.assertArrayEquals(received, sent);
             }
@@ -40,7 +40,7 @@ public class TestEnvironment {
     public void connectWrongName() {
         env.add(new Agent("alice") {
             @Override
-            public void run() {
+            public void task() {
 
             }
         });
@@ -52,7 +52,7 @@ public class TestEnvironment {
     public void connectInvalidName1() {
         env.add(new Agent("alice") {
             @Override
-            public void run() {
+            public void task() {
             }
         });
 
@@ -63,7 +63,7 @@ public class TestEnvironment {
     public void connectInvalidName2() {
         env.add(new Agent("alice") {
             @Override
-            public void run() {
+            public void task() {
             }
         });
 
@@ -74,7 +74,7 @@ public class TestEnvironment {
     public void connectInvalidName3() {
         env.add(new Agent("alice") {
             @Override
-            public void run() {
+            public void task() {
             }
         });
 
@@ -85,7 +85,7 @@ public class TestEnvironment {
     public void connectInvalidName4() {
         env.add(new Agent("alice") {
             @Override
-            public void run() {
+            public void task() {
             }
         });
 
@@ -96,12 +96,12 @@ public class TestEnvironment {
     public void connectExisting() {
         env.add(new Agent("alice") {
             @Override
-            public void run() {
+            public void task() {
             }
         });
         env.add(new Agent("bob") {
             @Override
-            public void run() {
+            public void task() {
             }
         });
 
@@ -115,13 +115,13 @@ public class TestEnvironment {
 
         env.add(new Agent("a") {
             @Override
-            public void run() {
+            public void task() {
                 send("b", data);
             }
         });
         env.add(new Agent("m") {
             @Override
-            public void run() {
+            public void task() {
                 final byte[] intercepted = receive("a");
                 Assert.assertArrayEquals(data, intercepted);
                 send("b", intercepted);
@@ -129,7 +129,7 @@ public class TestEnvironment {
         });
         env.add(new Agent("b") {
             @Override
-            public void run() {
+            public void task() {
                 final byte[] received = receive("a");
                 Assert.assertArrayEquals(data, received);
             }
@@ -143,12 +143,12 @@ public class TestEnvironment {
     public void mitmExistingDirect() {
         env.add(new Agent("alice") {
             @Override
-            public void run() {
+            public void task() {
             }
         });
         env.add(new Agent("bob") {
             @Override
-            public void run() {
+            public void task() {
             }
         });
 
@@ -160,17 +160,17 @@ public class TestEnvironment {
     public void mitmExistingToMITM() {
         env.add(new Agent("alice") {
             @Override
-            public void run() {
+            public void task() {
             }
         });
         env.add(new Agent("bob") {
             @Override
-            public void run() {
+            public void task() {
             }
         });
         env.add(new Agent("mitm") {
             @Override
-            public void run() {
+            public void task() {
             }
         });
 

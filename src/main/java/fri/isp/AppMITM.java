@@ -5,7 +5,7 @@ public class AppMITM {
         final Environment env = new Environment();
         env.add(new Agent("alice") {
             @Override
-            public void run() {
+            public void task() {
                 send("bob", "from Alice".getBytes());
                 print("Got '%s'", new String(receive("bob")));
             }
@@ -13,7 +13,7 @@ public class AppMITM {
 
         env.add(new Agent("bob") {
             @Override
-            public void run() {
+            public void task() {
                 send("alice", "from Bob".getBytes());
                 print("Got '%s'", new String(receive("alice")));
             }
@@ -21,7 +21,7 @@ public class AppMITM {
 
         env.add(new Agent("mallory") {
             @Override
-            public void run() {
+            public void task() {
                 final byte[] fromAlice = receive("alice");
                 print("Forwarding '%s' from '%s' to '%s'", new String(fromAlice), "alice", "bob");
                 send("bob", new String(fromAlice).toUpperCase().getBytes());

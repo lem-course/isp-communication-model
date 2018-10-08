@@ -35,7 +35,17 @@ public abstract class Agent extends Thread {
     }
 
     @Override
-    public abstract void run();
+    public final void run() {
+        try {
+            task();
+        } catch (Exception e) {
+            synchronized (System.err) {
+                e.printStackTrace(System.err);
+            }
+        }
+    }
+
+    public abstract void task() throws Exception;
 
     /**
      * A utility method that prints to standard output. The method accepts the usual printf commands.

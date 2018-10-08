@@ -6,7 +6,7 @@ public class App {
 
         env.add(new Agent("alice") {
             @Override
-            public void run() {
+            public void task() {
                 send("bob", "from Alice".getBytes());
                 send("charlie", "from Alice".getBytes());
                 print("Got '%s'", new String(receive("bob")));
@@ -16,7 +16,7 @@ public class App {
 
         env.add(new Agent("bob") {
             @Override
-            public void run() {
+            public void task() {
                 send("alice", "from Bob".getBytes());
                 send("charlie", "from Bob".getBytes());
                 print("Got '%s'", new String(receive("alice")));
@@ -26,7 +26,7 @@ public class App {
 
         env.add(new Agent("charlie") {
             @Override
-            public void run() {
+            public void task() {
                 send("bob", "from Charlie".getBytes());
                 send("alice", "from Charlie".getBytes());
                 print("Got '%s'", new String(receive("alice")));
