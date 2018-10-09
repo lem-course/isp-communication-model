@@ -4,7 +4,7 @@
 
     <groupId>fri.isp</groupId>
     <artifactId>isp-communication-model</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.1</version>
     <packaging>jar</packaging>
 
     <name>isp-communication-model</name>
